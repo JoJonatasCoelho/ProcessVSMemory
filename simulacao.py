@@ -18,18 +18,24 @@ def executar_simulacao(capacidade_memoria: int, definicoes_processos: list, algo
     gerenciador = GerenciadorMemoria(capacidade=capacidade_memoria, algoritmo=algoritmo, sequencia_futura=seq_futura, verbose=verbose)
     processos = [Processo(pid=d["pid"], paginas_requisitadas=d["paginas"]) for d in definicoes_processos]
 
-    threads = [
-        threading.Thread(target=_worker, args=(p, gerenciador), name=f"Thread-P{p.pid}", daemon=True)
-        for p in processos
-    ]
-
-    if verbose:
-        print(f"\n=== [{algoritmo.upper()}] Memória: {capacidade_memoria} frames | Threads: {[t.name for t in threads]} ===\n")
-
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join()
+    if algoritmo == "opt":
+        # OPT (Belady) requer execução sequencial: a ordem real de acessos
+        # precisa coincidir com a sequência futura pré-calculada.
+        if verbose:
+            print(f"\n=== [{algoritmo.upper()}] Memória: {capacidade_memoria} frames | Modo: SEQUENCIAL ===\n")
+        for p in processos:
+            _worker(p, gerenciador)
+    else:
+        threads = [
+            threading.Thread(target=_worker, args=(p, gerenciador), name=f"Thread-P{p.pid}", daemon=True)
+            for p in processos
+        ]
+        if verbose:
+            print(f"\n=== [{algoritmo.upper()}] Memória: {capacidade_memoria} frames | Threads: {[t.name for t in threads]} ===\n")
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
 
     return gerenciador, processos
 

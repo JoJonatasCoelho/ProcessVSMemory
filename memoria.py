@@ -20,8 +20,8 @@ class GerenciadorMemoria:
         if self.verbose:
             print(msg)
 
-    def _remover_lru(self, rastreio_lru: list):
-        removida = rastreio_lru.pop(0)
+    def _remover_lru(self):
+        removida = self._ordem_fifo.popleft()
         self.memoria.remove(removida)
         return removida
 
@@ -68,8 +68,7 @@ class GerenciadorMemoria:
 
                 if len(self.memoria) >= self.capacidade:
                     if self.algoritmo == "lru":
-                        removida = self._ordem_fifo.popleft()
-                        self.memoria.remove(removida)
+                        removida = self._remover_lru()
                     elif self.algoritmo == "fifo":
                         removida = self._remover_fifo()
                     elif self.algoritmo == "opt":
@@ -77,7 +76,8 @@ class GerenciadorMemoria:
                     self._registrar(f"     * [{self.algoritmo.upper()}] removeu: {removida}")
 
                 self.memoria.append(id_pagina)
-                self._ordem_fifo.append(id_pagina)
+                if self.algoritmo in ("lru", "fifo"):
+                    self._ordem_fifo.append(id_pagina)
                 self._registrar(f"  -> Memória: {self.memoria}")
 
     def resumo(self):
